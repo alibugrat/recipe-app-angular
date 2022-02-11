@@ -7,7 +7,7 @@ import {AuthService} from "./auth/auth.service";
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit{
-  title = 'shopping-app';
+  title = 'recipe-app';
   loadedFeature = "recipe";
 
   constructor(private authService: AuthService) {
