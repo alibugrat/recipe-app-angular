@@ -5,7 +5,7 @@ import {Subject} from "rxjs";
 import {Recipe} from "./recipe.model";
 import {Ingredient} from "../shared/ingredient.model";
 import {AddIngredients} from "../shopping-list/store/shopping-list.actions";
-import {AppState} from "../shopping-list/store/shopping-list.reducer";
+import {AppState} from "../store/app.reducer";
 
 @Injectable()
 export class RecipeService {
