@@ -1,8 +1,10 @@
 import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Ingredient} from "../../shared/ingredient.model";
-import {ShoppingListService} from "../shopping-list.service";
 import {NgForm} from "@angular/forms";
 import {Subscription} from "rxjs";
+import {Store} from "@ngrx/store";
+import {AddIngredient, DeleteIngredient, StopEdit, UpdateIngredient} from "../store/shopping-list.actions";
+import {AppState} from "../store/shopping-list.reducer";
 
 @Component({
   selector: 'app-shopping-edit',
@@ -13,22 +15,24 @@ export class ShoppingEditComponent implements OnInit, OnDestroy {
   @ViewChild('f') slForm: NgForm
   subscriptipn: Subscription;
   editMode = false;
-  editedItemIndex: number;
   editedItem: Ingredient;
 
-  constructor(private slService: ShoppingListService) {
+  constructor(private store: Store<AppState>) {
   }
 
   ngOnInit(): void {
-    this.subscriptipn = this.slService.startedEditing.subscribe( index => {
-      this.editedItemIndex = index;
-      this.editMode = true;
-      this.editedItem = this.slService.getIngredient(index);
-      this.slForm.setValue({
-        name: this.editedItem.name,
-        amount: this.editedItem.amount
-      })
-    })
+    this.subscriptipn = this.store.select('shoppingList').subscribe(stateData => {
+      if (stateData.editedIngredientIndex > -1) {
+        this.editMode = true;
+        this.editedItem = stateData.editedIngredient;
+        this.slForm.setValue({
+          name: this.editedItem.name,
+          amount: this.editedItem.amount
+        })
+      } else {
+        this.editMode = false;
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -38,22 +42,22 @@ export class ShoppingEditComponent implements OnInit, OnDestroy {
   onSubmit(form: NgForm) {
     const value = form.value
     const newIngredient = new Ingredient(value.name, value.amount);
-    if (this.editMode){
-      this.slService.updateIngredient(this.editedItemIndex, newIngredient)
-    }else{
-      this.slService.addIngredient(newIngredient);
+    if (this.editMode) {
+      this.store.dispatch(new UpdateIngredient(newIngredient))
+    } else {
+      this.store.dispatch(new AddIngredient(newIngredient))
     }
     this.editMode = false;
     form.reset();
   }
 
-  onClear(){
-    this.editMode = false;
+  onClear() {
+    this.store.dispatch(new StopEdit())
     this.slForm.reset();
   }
 
-  onDelete(){
-    this.slService.deleteIngredient(this.editedItemIndex);
+  onDelete() {
+    this.store.dispatch(new DeleteIngredient())
     this.onClear();
   }
 
