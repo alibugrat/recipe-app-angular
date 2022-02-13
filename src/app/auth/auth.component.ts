@@ -1,24 +1,36 @@
-import {Component, OnDestroy, ViewChild} from "@angular/core";
+import {Component, OnDestroy, OnInit, ViewChild} from "@angular/core";
 import {NgForm} from "@angular/forms";
-import {AuthResponseData, AuthService} from "./auth.service";
-import {Observable, Subscription} from "rxjs";
-import {Router} from "@angular/router";
+import {Subscription} from "rxjs";
 import {AlertComponent} from "../shared/alert/alert.component";
 import {PlaceholderDirective} from "../shared/placeholder/placeholder.directive";
+import {Store} from "@ngrx/store";
+import {AppState} from "../store/app.reducer";
+import {ClearError, LoginStart, SignupStart} from "./store/auth.actions";
 
 @Component({
   selector: 'app-auth',
   templateUrl: 'auth.component.html'
 })
-export class AuthComponent implements OnDestroy{
+export class AuthComponent implements OnInit, OnDestroy{
   isLoginMode = true;
   isLoading = false;
   error: string = null;
   @ViewChild(PlaceholderDirective) alertHost: PlaceholderDirective;
 
   private closeSub: Subscription;
+  private storeSub: Subscription;
 
-  constructor(private autService: AuthService, private router: Router) {
+  constructor(private store: Store<AppState>) {
+  }
+
+  ngOnInit() {
+    this.storeSub = this.store.select('auth').subscribe(authState => {
+      this.isLoading = authState.loading;
+      this.error = authState.authError;
+      if (this.error){
+        this.showErrorAlert(this.error);
+      }
+    })
   }
 
   onSwitchMode() {
@@ -33,25 +45,12 @@ export class AuthComponent implements OnDestroy{
     const email = form.value.email;
     const password = form.value.password
 
-    let autObs: Observable<AuthResponseData>;
-
     this.isLoading = true;
     if (this.isLoginMode) {
-      autObs = this.autService.login(email, password)
+      this.store.dispatch(new LoginStart({email: email, password: password}))
     } else {
-      autObs = this.autService.singUp(email, password)
+      this.store.dispatch(new SignupStart({email: email, password: password}))
     }
-
-    autObs.subscribe(resData => {
-      console.log(resData)
-      this.isLoading = false;
-      this.router.navigate(['/recipes'])
-    }, error => {
-      console.log(error)
-      this.error = error;
-      this.showErrorAlert(error);
-      this.isLoading = false;
-    })
 
     form.reset();
   }
@@ -66,13 +65,16 @@ export class AuthComponent implements OnDestroy{
     this.closeSub = componentRef.instance.close.subscribe(() => {
       this.closeSub.unsubscribe();
       hostViewContainerRef.clear();
-
+      this.store.dispatch(new ClearError());
     })
   }
 
   ngOnDestroy() {
     if (this.closeSub){
       this.closeSub.unsubscribe();
+    }
+    if (this.storeSub){
+      this.storeSub.unsubscribe();
     }
   }
 }

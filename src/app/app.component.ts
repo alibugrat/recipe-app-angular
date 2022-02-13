@@ -1,5 +1,8 @@
 import {Component, OnInit} from '@angular/core';
 import {AuthService} from "./auth/auth.service";
+import {AppState} from "./store/app.reducer";
+import {Store} from "@ngrx/store";
+import {AutoLogin} from "./auth/store/auth.actions";
 
 @Component({
   selector: 'app-root',
@@ -8,12 +11,11 @@ import {AuthService} from "./auth/auth.service";
 })
 export class AppComponent implements OnInit{
   title = 'recipe-app';
-  loadedFeature = "recipe";
 
-  constructor(private authService: AuthService) {
+  constructor(private authService: AuthService, private store: Store<AppState>) {
   }
 
   ngOnInit() {
-    this.authService.autoLogin();
+    this.store.dispatch(new AutoLogin());
   }
 }
