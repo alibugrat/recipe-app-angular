@@ -39,6 +39,7 @@ const handleAuthentication = (expiresIn: number, email: string, localId: string,
 }
 
 const handleError = (errorRes: any) => {
+  console.log(errorRes)
   let errorMessage = 'An unknown error occurred!'
   if (!errorRes.error || !errorRes.error.error) {
     return of(new AuthenticationFail(errorMessage));
